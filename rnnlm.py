@@ -230,8 +230,6 @@ class ReuseEmbeddingsRNNLM(SaveableRNNLM):
         self.gen_R = self.model.add_parameters((self.args.gen_input_dim, self.args.gen_hidden_dim))
         self.gen_bias = self.model.add_parameters((self.args.gen_input_dim,))
 
-        # print self.vocab.size, self.args.hidden_dim, self.args.input_dim
-
     def BuildLMGraph(self, sent, sent_args=None):
         if "skip_renew" not in sent_args: dynet.renew_cg()
 

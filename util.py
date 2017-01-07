@@ -1,10 +1,8 @@
 from collections import defaultdict
-from itertools import count
 import numpy as np
 import math, ast, os, codecs
 import cPickle as pickle
 import json, sys, io
-# from pattern.en import tokenize
 
 flatten = lambda l:[item for sublist in l for item in sublist]
 
@@ -209,6 +207,9 @@ class GenericLineCorpusReader(CorpusReaderTemplate):
         self.end = end
         self.seq2seq = False
         self.delimiter = '' if mode == "generic_char" else ' '
+        if mode == "generic_word":
+            from pattern.en import tokenize
+            self.tokenize = tokenize
 
     def __iter__(self):
         if os.path.isdir(self.fname):
@@ -226,7 +227,7 @@ class GenericLineCorpusReader(CorpusReaderTemplate):
                 elif self.mode == "generic_word":
                     for line in doc.split("\n"):
                         if not line: continue
-                        yield [self.begin] + ' '.join(tokenize(line)).split(" ") + [self.end]
+                        yield [self.begin] + ' '.join(self.tokenize(line)).split(" ") + [self.end]
 
 class PTBCorpusReader(CorpusReaderTemplate):
     names = {"ptb", "ptb_bracketed", "ptb_stripped", "ptb_char_stripped", "ptb_nopos"}

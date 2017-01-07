@@ -38,7 +38,7 @@ parser.add_argument("--rnn", default="lstm", choices={"lstm","rnn","gru"}, help=
 parser.add_argument("--dropout", default=.1, type=float, help="set dropout probability")
 
 ## experiment parameters
-parser.add_argument("--trainer", default="adam", choices={"sgd", "adam", "adagrad"}, help="choose training algorithm")
+parser.add_argument("--trainer", default="sgd", choices={"sgd", "adam", "adagrad"}, help="choose training algorithm")
 parser.add_argument("--learning_rate", help="set learning rate of trainer")
 parser.add_argument("--epochs", default=10, type=int, help="maximum number of epochs to run experiment")
 parser.add_argument("--minibatch_size", default=1, type=int, help="size of minibatches")
