@@ -1,6 +1,6 @@
 # RNN Language Model Boilerplate
 
-This is boilerplate code for quickly and easily getting experiments on language modeling off of the ground. The code is written in the Python version of the [DyNet framework]{https://github.com/clab/dynet}, which can be installed using [these instructions]{http://dynet.readthedocs.io/en/latest/python.html}.
+This is boilerplate code for quickly and easily getting experiments on language modeling off of the ground. The code is written in the Python version of the [DyNet framework](https://github.com/clab/dynet), which can be installed using [these instructions](http://dynet.readthedocs.io/en/latest/python.html).
 
 ## Quickstart
 
@@ -26,7 +26,7 @@ To implement a new model, simply go into rnnlm.py, create a new subclass of Save
 
 ## Example Use Case
 
-Let's say we wanted to test out [how reuse of word embeddings affects the performance of a language model] {https://openreview.net/pdf?id=r1aPbsFle}. We'll be using the PTB corpus, so I don't need to worry about setting up a new corpus reader. First, let's train a baseline model for 10 epochs:
+Let's say we wanted to test out [how reuse of word embeddings affects the performance of a language model] (https://openreview.net/pdf?id=r1aPbsFle). We'll be using the PTB corpus, so I don't need to worry about setting up a new corpus reader. First, let's train a baseline model for 10 epochs:
 
 python train.py --dynet-mem 3000 --word_level --size=small --minibatch_size=24 --save=small_baseline.model
 python train.py --dynet-mem 3000 --word_level --size=small --minibatch_size=24 --load=small_baseline.model --evaluate
@@ -40,8 +40,8 @@ python train.py --dynet-mem 3000 --arch=reuse_emb --word_level --size=small --mi
 python train.py --dynet-mem 3000 --arch=reuse_emb --word_level --size=small --minibatch_size=24 --load=small_reuseemb.model --evaluate
 >> [still running test]
 
-And there we go! Very straightforward.
+And there we have it - reuse of embeddings gives us a [we shall see when the tests finish running] difference in perplexity. Very straightforward!
 
 ## Questions?
 
-If you have any questions, feel free to hit me up: jacobbuckman@cmu.edu
+If you have any questions, please feel free to hit me up: jacobbuckman@cmu.edu
