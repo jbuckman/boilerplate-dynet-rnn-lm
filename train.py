@@ -7,52 +7,60 @@ random.seed(78789) # I like setting a seed for consistent behavior when debuggin
 parser = argparse.ArgumentParser()
 
 ## need to have this dummy argument for dynet
-parser.add_argument("--dynet-mem")
-parser.add_argument("--dynet-gpu")
+parser.add_argument("--dynet-mem", help="set size of dynet memory allocation, in MB")
+parser.add_argument("--dynet-gpu", help="use GPU acceleration")
 
 ## locations of data
-parser.add_argument("--train", default="ptb/train.ptb")
-parser.add_argument("--valid", default="ptb/valid.ptb")
-parser.add_argument("--test", default="ptb/test.ptb")
-parser.add_argument("--reader")
+parser.add_argument("--train", default="ptb/train.ptb", help="location of training data")
+parser.add_argument("--valid", default="ptb/valid.ptb", help="location of validation data")
+parser.add_argument("--test", default="ptb/test.ptb", help="location of test data")
+parser.add_argument("--reader", help="choose which CorpusReader subclass will be used for parsing raw data into tokens")
 
 ## alternatively, load one dataset and split it
-parser.add_argument("--split_train", action='store_true')
-parser.add_argument("--percent_valid", default=1000, type=float)
-parser.add_argument("--percent_test", default=.05, type=float)
+parser.add_argument("--split_train", action='store_true', help="rather than loading valid & test sets, just split the training data into three pieces")
+parser.add_argument("--valid_size", default=1000, type=float, help="if using --split_train, choose the proportion of data to make into validation set." +
+                                                                   "if this is less than 1, it is treated as a proportion of the total number of " +
+                                                                   "training examples; otherwise, it is a count")
+parser.add_argument("--test_size", default=.05, type=float, help="if using --split_train, choose the proportion of data to make into test set." +
+                                                                   "if this is less than 1, it is treated as a proportion of the total number of " +
+                                                                   "training examples; otherwise, it is a count")
 
 ## vocab parameters
-parser.add_argument('--rebuild_vocab', action='store_true')
-parser.add_argument('--unk_thresh', default=5, type=int)
+parser.add_argument('--rebuild_vocab', action='store_true', help="rebuild the vocabulary rather than using the cached vocabulary")
+parser.add_argument('--unk_thresh', default=5, type=int, help="choose the minimum number of times a token needs to appear before being considered an <UNK>")
 
 ## rnn parameters
-parser.add_argument("--size", choices={"small", "medium", "large", "enormous"})
-parser.add_argument("--gen_layers", default=1, type=int)
-parser.add_argument("--gen_input_dim", default=10, type=int)
-parser.add_argument("--gen_hidden_dim", default=50, type=int)
-parser.add_argument("--rnn", default="lstm")
-parser.add_argument("--dropout", default=.1, type=float)
+parser.add_argument("--size", choices={"small", "medium", "large", "enormous"}, help="convenience flag for setting the size of the RNN")
+parser.add_argument("--gen_layers", default=1, type=int, help="choose number of layers for RNN")
+parser.add_argument("--gen_input_dim", default=10, type=int, help="choose token embedding dimension")
+parser.add_argument("--gen_hidden_dim", default=50, type=int, help="choose size of hidden state of RNN")
+parser.add_argument("--rnn", default="lstm", choices={"lstm","rnn","gru"}, help="choose type of RNN")
+parser.add_argument("--dropout", default=.1, type=float, help="set dropout probability")
 
 ## experiment parameters
-parser.add_argument("--trainer", default="adam", choices={"sgd", "adam", "adagrad"})
-parser.add_argument("--learning_rate")
-parser.add_argument("--epochs", default=10, type=int)
-parser.add_argument("--minibatch_size", default=1, type=int)
-parser.add_argument("--unbatch_idx", default=50, type=int)
-parser.add_argument("--log_train_every_n", default=100, type=int)
-parser.add_argument("--log_valid_every_n", default=5000, type=int)
-parser.add_argument("--output")
-parser.add_argument("--begin_token", default='<s>')
-parser.add_argument("--end_token", default='<e>')
+parser.add_argument("--trainer", default="adam", choices={"sgd", "adam", "adagrad"}, help="choose training algorithm")
+parser.add_argument("--learning_rate", help="set learning rate of trainer")
+parser.add_argument("--epochs", default=10, type=int, help="maximum number of epochs to run experiment")
+parser.add_argument("--minibatch_size", default=1, type=int, help="size of minibatches")
+parser.add_argument("--unbatch_idx", default=50, type=int, help="sometimes, with very long inputs, there will be long inputs that are the only input of that length."
+                                                                " if these are included in minibatches, we end up using a ton of padding on the other sentnces in the"
+                                                                " minibatch to compensate, and this often results in a ton of memory being consumed. this flag sets the"
+                                                                " number of sentences in the training set to skip minibatching on - the longest N inputs will be "
+                                                                "given batches of size 1")
+parser.add_argument("--log_train_every_n", default=100, type=int, help="how often to log training loss")
+parser.add_argument("--log_valid_every_n", default=5000, type=int, help="how often to evaluate on validation set, log the loss, and potentially save off the model")
+parser.add_argument("--output", help="file location to log validation outputs to")
+parser.add_argument("--begin_token", default='<s>', help="special token prepended to sequences")
+parser.add_argument("--end_token", default='<e>', help="special token appended to sequences")
 
 ## choose what model to use
-parser.add_argument("--arch", default="baseline")
-parser.add_argument("--save")
-parser.add_argument("--load")
+parser.add_argument("--arch", default="baseline", help="choose what RNNLM architecture you want to use")
+parser.add_argument("--save", help="location to save model")
+parser.add_argument("--load", help="location to load model from")
 
 ## other parameters
-parser.add_argument("--word_level", action="store_true")
-parser.add_argument("--evaluate", action="store_true")
+parser.add_argument("--word_level", action="store_true", help="if doing LM on PTB, convenience flag for deciding between character and word level")
+parser.add_argument("--evaluate", action="store_true", help="convenience flag for runnning just test validation (no train step)")
 
 args = parser.parse_args()
 print "ARGS:", args
@@ -118,13 +126,15 @@ if not args.split_train:
 
 ################################### SPLIT THE DATA (IF NEEDED)
 if args.split_train:
-    if args.percent_valid > 1: vc = args.percent_valid
-    else: vc = int(len(train_data)*(args.percent_valid))
-    if args.percent_test > 1: tc = args.percent_test
-    else: tc = int(len(train_data)*(args.percent_test))
+    if args.valid_size > 1: vc = args.valid_size
+    else: vc = int(len(train_data)*(args.valid_size))
+    if args.test_size > 1: tc = args.test_size
+    else: tc = int(len(train_data)*(args.test_size))
     valid_data = train_data[-(vc+tc):-tc]
     test_data = train_data[-tc:]
     train_data = train_data[:-(vc+tc)]
+    if len(train_data) == 0 or len(valid_data) == 0 or len(test_data) == 0:
+        raise Exception("either your train, validation, or test set is of size 0; adjust --valid_size and --test_size")
 
 ################################### WIPE THE OUTPUT FILE
 if args.output:
