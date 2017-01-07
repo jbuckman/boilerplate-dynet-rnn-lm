@@ -4,7 +4,9 @@ To train a baseline Char-RNN model,  on any:
 
 `python train.py --train=<filename> --reader=generic_char --split_train`
 
-From there, there's a bunch of flags you can set to adjust the size of the model, the dropout, the architecture, and many other things. The flags should be pretty self explanatory; they'll be fully documented at some point in the near future. You can list the flags with `python train.py -h`
+From there, there's a bunch of flags you can set to adjust the size of the model, the dropout, the architecture, and many other things. The flags should be pretty self explanatory. You can list the flags with `python train.py -h`
+
+If you want to save off a trained model and come back to it later, just use the `--save=FILELOC` flag. Then, you can load it later on with the `load=FILELOC` flag. NOTE: if you load a model, you also load it's parameter settings, so the `--load` flag overrides things like `--size`, `--gen_layers`, `--gen_hidden_dim`, etc.
 
 By default, this code is set up to train on the Penn Treebank data. I'm not sure if I'm allowed to distribute it publicly, so the folder is currently empty, but if you get your hands on the data, just rename the files to `train.ptb`, `valid.ptb`, and `test.ptb` and put them in the `ptb/` folder.
 
