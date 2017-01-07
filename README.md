@@ -4,7 +4,7 @@ This is boilerplate code for quickly and easily getting experiments on language 
 
 ## Quickstart
 
-To train a baseline Char-RNN model,  on any:
+To train a baseline Char-RNN model, on any file:
 
 `python train.py --train=<filename> --reader=generic_char --split_train`
 
