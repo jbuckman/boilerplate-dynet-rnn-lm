@@ -12,7 +12,7 @@ From there, there's a bunch of flags you can set to adjust the size of the model
 
 ## Saving & Loading Models
 
-If you want to save off a trained model and come back to it later, just use the `--save=FILELOC` flag. Then, you can load it later on with the `load=FILELOC` flag. NOTE: if you load a model, you also load it's parameter settings, so the `--load` flag overrides things like `--size`, `--gen_layers`, `--gen_hidden_dim`, etc.
+If you want to save off a trained model and come back to it later, just use the `--save=FILELOC` flag. Then, you can load it later on with the `load=FILELOC` flag. NOTE: if you load a model, you also load its parameter settings, so the `--load` flag overrides things like `--size`, `--gen_layers`, `--gen_hidden_dim`, etc.
 
 ## Choose Training Corpus
 
