@@ -52,7 +52,7 @@ Next, let's modify our baseline language model to incorporate reuse of word embe
 
 `python train.py --dynet-mem 3000 --arch=reuse_emb --word_level --minibatch_size=24 --load=small_reuseemb.model --evaluate`
 
-`>> [Test TEST]     Loss: 4.34946627675     Perplexity: 115.64385445        Time: 15.4759089947`
+`[Test TEST]     Loss: 4.34946627675     Perplexity: 115.64385445        Time: 15.4759089947`
 
 And there we have it - reuse of embeddings gives us a 6-point decrease in perplexity. Very straightforward!
 
