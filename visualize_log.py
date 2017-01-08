@@ -123,7 +123,7 @@ for n, title in enumerate(log_data):
 
 # Note that if the title is descriptive enough, it is unnecessary to include
 # axis labels; they are self-evident, in this plot's case.
-plt.title('Perplexity after N training iterations\n', fontsize=18, ha='center')
+plt.title('Validation Set Perplexity After N Training Iterations\n', fontsize=18, ha='center')
 
 # Finally, save the figure.
 # Just change the file extension in this call.
