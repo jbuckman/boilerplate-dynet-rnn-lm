@@ -2,3 +2,6 @@
 *.ptb
 .idea/*
 *~
+logs/*
+models/*
+ptb/*
