@@ -31,10 +31,11 @@ for logfile in logfiles:
         # log_data[logfile + " loss"] = {"xs":xs, "ys":losses}
         log_data[logfile + " ppl"] = {"xs":xs, "ys":perps}
 
-x_min = min(util.flatten([data["xs"] for data in log_data.values()]))
+# x_min = min(util.flatten([data["xs"] for data in log_data.values()]))
+x_min = 0
 x_max = max(util.flatten([data["xs"] for data in log_data.values()]))
 x_tick_size = (x_max - x_min)/24.
-x_min -= x_tick_size/2
+# x_min -= x_tick_size/2
 x_max += x_tick_size/2
 
 y_min = min(util.flatten([data["ys"] for data in log_data.values()]))
