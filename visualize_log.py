@@ -10,7 +10,7 @@ import random
 
 parser = argparse.ArgumentParser()
 parser.add_argument("logfiles", help="List of log files", nargs="+")
-parser.add_argument("output", help="Location to output graph to")
+parser.add_argument("--output", help="Location to output graph to")
 
 args = parser.parse_args()
 
