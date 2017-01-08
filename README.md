@@ -34,11 +34,11 @@ To get a clean graph of how your model is training over time, call `python visua
 
 Let's say we wanted to test out [how reuse of word embeddings affects the performance of a language model] (https://openreview.net/pdf?id=r1aPbsFle). We'll be using the PTB corpus, so I don't need to worry about setting up a new corpus reader. First, let's train a baseline model for 10 epochs:
 
-> `python train.py --dynet-mem 3000 --word_level --size=small --minibatch_size=24 --save=small_baseline.model --output=small_baseline.log`
+`python train.py --dynet-mem 3000 --word_level --size=small --minibatch_size=24 --save=small_baseline.model --output=small_baseline.log`
 
 (Wait for around 2-3 hours)
 
-> `python train.py --dynet-mem 3000 --word_level --minibatch_size=24 --load=small_baseline.model --evaluate`
+`python train.py --dynet-mem 3000 --word_level --minibatch_size=24 --load=small_baseline.model --evaluate`
 
 `[Test TEST]     Loss: 4.49591021467     Perplexity: 121.516469934       Time: 17.0475099087`
 
