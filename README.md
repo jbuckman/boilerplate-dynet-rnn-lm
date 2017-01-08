@@ -54,8 +54,10 @@ We can visualize this using the included `visualize_log.py` script:
 
 `python visualize_log.py small_baseline.log small_baseline.log`
 
+Producing:
 
+![image of graph](https://github.com/jbuckman/boilerplate-dynet-rnn-lm/blob/master/compare_baseline_reuseemb.png)
 
-## Questions?
+## Contact
 
-If you have any questions, please feel free to hit me up: jacobbuckman@cmu.edu
+If you have any questions, please feel free to hit me up: jacobbuckman [.a.t.] cmu.edu
