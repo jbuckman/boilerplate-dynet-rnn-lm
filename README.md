@@ -60,4 +60,4 @@ Producing:
 
 ## Contact
 
-If you have any questions, please feel free to hit me up: jacobbuckman [.a.t.] cmu.edu
+If you have any questions, please feel free to hit me up: jacobbuckman@cmu.edu
