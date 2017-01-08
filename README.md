@@ -32,7 +32,11 @@ To get a clean graph of how your model is training over time, call `python visua
 
 ## Example Use Case
 
-Let's say we wanted to test out [how reuse of word embeddings affects the performance of a language model] (https://openreview.net/pdf?id=r1aPbsFle). We'll be using the PTB corpus, so I don't need to worry about setting up a new corpus reader. First, let's train a baseline model for 10 epochs:
+Let's say we wanted to test out [how reuse of word embeddings affects the performance of a language model] (https://openreview.net/pdf?id=r1aPbsFle). We'll be using the PTB corpus, so we don't need to worry about setting up a new corpus reader - just use the default.
+
+### Train & Evaluate Baseline
+
+First, let's train a baseline model for 10 epochs:
 
 `python train.py --dynet-mem 3000 --word_level --size=small --minibatch_size=24 --save=small_baseline.model --output=small_baseline.log`
 
@@ -44,9 +48,11 @@ Let's say we wanted to test out [how reuse of word embeddings affects the perfor
 
 This is much worse than the baseline perplexity reported in the paper, but that's because we are just using a generic LSTM model as our baseline, rather than the more complex VD-LSTM model.
 
-Next, let's modify our baseline language model to incorporate reuse of word embeddings. As an example, I've done this at the bottom of rnnlm.py, creating a class called `ReuseEmbeddingsRNNLM` with `name = "reuse_emb"`. The code is pretty much just a copy-and-paste of the baseline model above, changing around 10 lines to incorporate resuse of word embeddings into the prediction of outputs. Now, let's run those tests too:
+### Write, Train & Evaluate Another Model
 
-`python train.py --dynet-mem 3000 --arch=reuse_emb --word_level --size=small --minibatch_size=24 --save=small_reuseemb.model --output=small_baseline.log`
+Next, let's modify our baseline language model to incorporate reuse of word embeddings. As an example, I've done this in rnnlm.py, creating a class called `ReuseEmbeddingsRNNLM` with `name = "reuse_emb"`. The code is pretty much just a copy-and-paste of the baseline model above, changing around 10 lines to incorporate resuse of word embeddings into the prediction of outputs. Now, let's run those tests too:
+
+`python train.py --dynet-mem 3000 --arch=reuse_emb --word_level --size=small --minibatch_size=24 --save=small_reuseemb.model --output=small_reuseemb.log`
 
 (Wait for around 2-3 hours)
 
@@ -54,11 +60,13 @@ Next, let's modify our baseline language model to incorporate reuse of word embe
 
 `[Test TEST]     Loss: 4.34946627675     Perplexity: 115.64385445        Time: 15.4759089947`
 
-And there we have it - reuse of embeddings gives us a 6-point decrease in perplexity. Very straightforward!
+And there we have it - reuse of embeddings gives us a 6-point decrease in perplexity.  Nice!
 
-We can visualize this using the included `visualize_log.py` script:
+### Visualize Training
 
-`python visualize_log.py small_baseline.log small_baseline.log`
+Since we turned on the flag for output logs, `--output=small_baseline.log` and `--output=small_reuseemb.log`, we can visualize our validation error over time during training by using the included `visualize_log.py` script:
+
+`python visualize_log.py small_baseline.log small_baseline.log --output=compare_baseline_reuseemb.png`
 
 Producing:
 
