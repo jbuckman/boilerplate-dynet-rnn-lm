@@ -2,6 +2,8 @@
 
 This is boilerplate code for quickly and easily getting experiments on language modeling off of the ground. The code is written in the Python version of the [DyNet framework](https://github.com/clab/dynet), which can be installed using [these instructions](http://dynet.readthedocs.io/en/latest/python.html).
 
+For an introduction to RNN language models, how they work, and some cool demos, please take a look at Andrej Karpathy's excellent blog post: [The Unreasonable Effectiveness of Recurrent Neural Networks](http://karpathy.github.io/2015/05/21/rnn-effectiveness/).
+
 ## Quickstart
 
 To train a baseline Char-RNN model, on any file:
