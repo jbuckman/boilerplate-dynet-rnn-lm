@@ -32,9 +32,14 @@ for logfile in logfiles:
 x_min = min(util.flatten([data["xs"] for data in log_data.values()]))
 x_max = max(util.flatten([data["xs"] for data in log_data.values()]))
 x_tick_size = (x_max - x_min)/24.
+x_min -= x_tick_size/2
+x_max += x_tick_size/2
+
 y_min = min(util.flatten([data["ys"] for data in log_data.values()]))
 y_max = max(util.flatten([data["ys"] for data in log_data.values()]))
 y_tick_size = (y_max - y_min)/8.
+y_min -= y_tick_size/2
+y_max += y_tick_size/2
 
 # These are the colors that will be used in the plot
 color_sequence = ['#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c',
@@ -43,8 +48,7 @@ color_sequence = ['#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c',
                   '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5']
 random.shuffle(color_sequence)
 
-# You typically want your plot to be ~1.33x wider than tall. This plot
-# is a rare exception because of the number of lines being plotted on it.
+# You typically want your plot to be ~1.33x wider than tall.
 # Common sizes: (10, 7.5) and (12, 9)
 fig, ax = plt.subplots(1, 1, figsize=(12, 9))
 
