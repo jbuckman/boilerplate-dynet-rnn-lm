@@ -10,6 +10,7 @@ import random
 
 parser = argparse.ArgumentParser()
 parser.add_argument("logfiles", help="List of log files", nargs="+")
+parser.add_argument("output", help="Location to output graph to")
 
 args = parser.parse_args()
 
@@ -115,8 +116,7 @@ for n, title in enumerate(log_data):
 # axis labels; they are self-evident, in this plot's case.
 plt.title('Perplexity after N training iterations\n', fontsize=18, ha='center')
 
-# Finally, save the figure as a PNG.
-# You can also save it as a PDF, JPEG, etc.
+# Finally, save the figure.
 # Just change the file extension in this call.
-# plt.savefig('out.png', bbox_inches='tight')
-plt.show()
+if args.output: plt.savefig(args.output, bbox_inches='tight')
+else:           plt.show()
