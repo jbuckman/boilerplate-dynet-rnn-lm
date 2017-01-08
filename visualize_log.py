@@ -1,5 +1,8 @@
-import matplotlib
-matplotlib.use('Agg')
+import os
+import matplotlib as mpl
+if os.environ.get('DISPLAY','') == '':
+    print('no display found. Using non-interactive Agg backend')
+    mpl.use('Agg')
 import matplotlib.pyplot as plt
 import util
 import argparse
@@ -13,7 +16,6 @@ import random
 parser = argparse.ArgumentParser()
 parser.add_argument("logfiles", help="List of log files", nargs="+")
 parser.add_argument("--output", help="Location to output graph to")
-
 args = parser.parse_args()
 
 logfiles = args.logfiles
@@ -124,5 +126,5 @@ plt.title('Perplexity after N training iterations\n', fontsize=18, ha='center')
 
 # Finally, save the figure.
 # Just change the file extension in this call.
-if args.output: plt.savefig(args.output, bbox_inches='tight')
-else:           plt.show()
+if args.output is not None: plt.savefig(args.output, bbox_inches='tight')
+else:                       plt.show()
