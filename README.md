@@ -2,13 +2,23 @@
 
 This is boilerplate code for quickly and easily getting experiments on language modeling off of the ground. The code is written in the Python version of the [DyNet framework](https://github.com/clab/dynet), which can be installed using [these instructions](http://dynet.readthedocs.io/en/latest/python.html).
 
+It also has [pattern.en](http://www.clips.ua.ac.be/pages/pattern-en) as a dependency for tokenization, if you are using the default reader at word-level.
+
 For an introduction to RNN language models, how they work, and some cool demos, please take a look at Andrej Karpathy's excellent blog post: [The Unreasonable Effectiveness of Recurrent Neural Networks](http://karpathy.github.io/2015/05/21/rnn-effectiveness/).
 
 ## Quickstart
 
-To train a baseline Char-RNN model, on any file:
+To train a baseline RNN model on the Penn Treebank:
 
-`python train.py --train=<filename> --reader=generic_char --split_train`
+Char-level: `python train.py`
+
+Word-level: `python train.py --word_level`
+
+To train a baseline RNN model, on any file:
+
+Char-level: `python train.py --train=<filename> --reader=generic_char --split_train`
+
+Word-level: `python train.py --train=<filename> --reader=generic_word --split_train`
 
 From there, there's a bunch of flags you can set to adjust the size of the model, the dropout, the architecture, and many other things. The flags should be pretty self explanatory. You can list the flags with `python train.py -h`
 
@@ -18,7 +28,7 @@ If you want to save off a trained model and come back to it later, just use the 
 
 ## Choose Training Corpus
 
-By default, this code is set up to train on the Penn Treebank data. I'm not sure if I'm allowed to distribute it publicly, so the folder is currently empty, but if you get your hands on the data, just rename the files to `train.ptb`, `valid.ptb`, and `test.ptb` and put them in the `ptb/` folder.
+By default, this code is set up to train on the Penn Treebank data, which is included in the repo in the `ptb/` folder.
 
 To add a new data source, simply implement a new CorpusReader in util.py. Make sure that you set the `names` property to be a list that includes at least one unique ID. Then, set the `--reader=ID`, and use the `--train`, `--valid`, and `--test` flags to point to your data set. If you don't have pre-separated data, just set `--train` and include the `--split_train` flag to have your data automatically separated into train, valid, and test splits.
 
