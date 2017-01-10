@@ -221,7 +221,7 @@ class GenericLineCorpusReader(CorpusReaderTemplate):
         self.begin = begin
         self.end = end
         self.seq2seq = False
-        self.delimiter = '' if mode == "generic_char" else ' '
+        self.delimiter = '\032' if mode == "generic_char" else ' '
         if mode == "generic_word":
             from pattern.en import tokenize
             self.tokenize = tokenize
@@ -253,7 +253,7 @@ class PTBCorpusReader(CorpusReaderTemplate):
         self.end = end
         self.seq2seq = False
         if "char" in mode:
-            self.delimiter = ''
+            self.delimiter = '\032'
         else:
             self.delimiter = ' '
 
