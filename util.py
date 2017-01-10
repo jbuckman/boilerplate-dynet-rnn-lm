@@ -43,11 +43,21 @@ def itersubclasses(cls, _seen=None):
             for sub in itersubclasses(sub, _seen):
                 yield sub
 
+class key_dependent_dict(defaultdict):
+    def __init__(self,f_of_x):
+        super(key_dependent_dict, self).__init__(None) # base class doesn't get a factory
+        self.f_of_x = f_of_x # save f(x)
+    def __missing__(self, key): # called when a default needed
+        ret = self.f_of_x(key) # calculate default value
+        self[key] = ret # and install it in the dict
+        return ret
+
 class Token(object):
     def __init__(self, i, s, count=1):
         self.i = i
         self.s = s
         self.count = count
+        self.original_s = s
 
     def __eq__(self, other):
         return self.i == other or self.s == other or \
@@ -104,6 +114,11 @@ class Vocab(object):
         elif isinstance(key, Token): return key
         else: return self.s2t[key]
 
+    def unkify(self, string):
+        tok = self.unk
+        tok.original = string
+        return tok
+
     def add_unk(self, thresh=0, unk_string='<UNK>'):
         if unk_string in self.s2t.keys(): raise Exception("tried to add an UNK token that already existed")
         if self.unk is not None: raise Exception("already added an UNK token")
@@ -114,8 +129,8 @@ class Vocab(object):
         if self.END_TOK is not None and self.END_TOK not in strings: strings.append(self.END_TOK.s)
         self.tokens = set([])
         self.strings = set([])
-        self.i2t = defaultdict(lambda :self.unk)
-        self.s2t = defaultdict(lambda :self.unk)
+        self.i2t = key_dependent_dict(lambda s:self.unkify(s))
+        self.s2t = key_dependent_dict(lambda s:self.unkify(s))
         for string in strings:
             self.add_string(string)
         self.unk = self.s2t[unk_string]
