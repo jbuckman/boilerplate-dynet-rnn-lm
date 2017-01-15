@@ -40,6 +40,10 @@ To implement a new model, simply go into rnnlm.py, create a new subclass of Save
 
 To get a clean graph of how your model is training over time, call `python visualize_log.py <filename> <filename>...` to plot up to 20 training runs. The to generate the logfiles used as input for the visualizer, simply include the `--output=<filename>` flag when training.
 
+## Scaling Up
+
+The `--size` parameter comes in four settings: small (1 layer, 128 parameters per embedding, 128 nodes in the recurrent hidden layer), medium (2 layers, 256 input dim, 256 hidden dim), large (2, 512, 512), and enormous (2, 1024, 1024). You can also set the parameters individually, with the flags `--gen_layers`, `--gen_input_dim`, and `--gen_hidden_dim`.
+
 ## Example Use Case
 
 Let's say we wanted to test out [how reuse of word embeddings affects the performance of a language model] (https://openreview.net/pdf?id=r1aPbsFle). We'll be using the PTB corpus, so we don't need to worry about setting up a new corpus reader - just use the default.
