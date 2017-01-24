@@ -11,9 +11,9 @@ parser.add_argument("--dynet-mem", help="set size of dynet memory allocation, in
 parser.add_argument("--dynet-gpu", help="use GPU acceleration")
 
 ## locations of data
-parser.add_argument("--train", default="ptb/train.ptb", help="location of training data")
-parser.add_argument("--valid", default="ptb/valid.ptb", help="location of validation data")
-parser.add_argument("--test", default="ptb/test.ptb", help="location of test data")
+parser.add_argument("--train", default="ptb/mikolov/train.ptb", help="location of training data")
+parser.add_argument("--valid", default="ptb/mikolov/valid.ptb", help="location of validation data")
+parser.add_argument("--test", default="ptb/mikolov/test.ptb", help="location of test data")
 parser.add_argument("--reader", help="choose which CorpusReader subclass will be used for parsing raw data into tokens")
 
 ## alternatively, load one dataset and split it
@@ -27,7 +27,7 @@ parser.add_argument("--test_size", default=.05, type=float, help="if using --spl
 
 ## vocab parameters
 parser.add_argument('--rebuild_vocab', action='store_true', help="rebuild the vocabulary rather than using the cached vocabulary")
-parser.add_argument('--unk_thresh', default=5, type=int, help="choose the minimum number of times a token needs to appear before being considered an <UNK>")
+parser.add_argument('--unk_thresh', default=0, type=int, help="choose the minimum number of times a token needs to appear before being considered an <UNK>")
 
 ## rnn parameters
 parser.add_argument("--size", choices={"small", "medium", "large", "enormous"}, help="convenience flag for setting the size of the RNN")
@@ -42,11 +42,11 @@ parser.add_argument("--trainer", default="sgd", choices={"sgd", "adam", "adagrad
 parser.add_argument("--learning_rate", help="set learning rate of trainer")
 parser.add_argument("--epochs", default=10, type=int, help="maximum number of epochs to run experiment")
 parser.add_argument("--minibatch_size", default=1, type=int, help="size of minibatches")
-parser.add_argument("--unbatch_idx", default=50, type=int, help="sometimes, with very long inputs, there will be long inputs that are the only input of that length."
-                                                                " if these are included in minibatches, we end up using a ton of padding on the other sentnces in the"
-                                                                " minibatch to compensate, and this often results in a ton of memory being consumed. this flag sets the"
-                                                                " number of sentences in the training set to skip minibatching on - the longest N inputs will be "
-                                                                "given batches of size 1")
+parser.add_argument("--unbatch_idx", default=0, type=int, help="sometimes, with very long inputs, there will be long inputs that are the only input of that length."
+                                                               " if these are included in minibatches, we end up using a ton of padding on the other sentnces in the"
+                                                               " minibatch to compensate, and this often results in a ton of memory being consumed. this flag sets the"
+                                                               " number of sentences in the training set to skip minibatching on - the longest N inputs will be "
+                                                               "given batches of size 1")
 parser.add_argument("--log_train_every_n", default=100, type=int, help="how often to log training loss")
 parser.add_argument("--log_valid_every_n", default=5000, type=int, help="how often to evaluate on validation set, log the loss, and potentially save off the model")
 parser.add_argument("--output", help="file location to log validation outputs to")
@@ -85,8 +85,8 @@ elif args.size == "enormous":
     args.gen_hidden_dim = 1024
 
 if args.reader is None:
-    if args.word_level: CORPUS_READ_STYLE = "ptb_stripped"
-    else: CORPUS_READ_STYLE = "ptb_char_stripped"
+    if args.word_level: CORPUS_READ_STYLE = "generic_word"
+    else: CORPUS_READ_STYLE = "generic_char"
 else:
     CORPUS_READ_STYLE = args.reader
 
@@ -115,7 +115,7 @@ else:
     vocab = util.Vocab.load_from_corpus(reader, remake=args.rebuild_vocab)
     vocab.START_TOK = vocab[BEGIN_TOKEN]
     vocab.END_TOK = vocab[END_TOKEN]
-    vocab.add_unk(args.unk_thresh)
+    if args.unk_thresh > 0: vocab.add_unk(args.unk_thresh, "<UNK>")
     lm = rnnlm.get_model(args.arch)(model, vocab, args)
 
 ################################### LOAD THE DATA
@@ -147,42 +147,44 @@ train_data.sort(key=lambda x:-len(x))
 valid_data.sort(key=lambda x:-len(x))
 test_data.sort(key=lambda x:-len(x))
 
-unbatch_idx = args.minibatch_size*(int(args.unbatch_idx/args.minibatch_size)+1)
+unbatch_idx = args.minibatch_size*(int(args.unbatch_idx/args.minibatch_size))
 train_mb_indices = range(unbatch_idx) + range(unbatch_idx, len(train_data), args.minibatch_size)
-# train_mb_indices = range(0, len(train_data), args.minibatch_size)
 valid_mb_indices = range(0, len(valid_data), args.minibatch_size)
 test_mb_indices = range(0, len(test_data), args.minibatch_size)
 
-predictions_made = lambda x: len(x) - 1
+words_predicted = lambda x: len(x) - 1
 
 ################################### LEGGO
 best_score = None
 token_count = sent_count = cum_loss = cum_perplexity = 0.0
+log_train_counter = args.log_train_every_n
+log_valid_counter = args.log_valid_every_n
+sample_num = 0
 _start = time.time()
 for ITER in range(args.epochs):
     lm.epoch = ITER
     random.shuffle(train_mb_indices)
 
     for i, index in enumerate(train_mb_indices):
-        sample_num = (1+i)*args.minibatch_size+(len(train_data)*ITER)
-
         #### train logging
-        if (sample_num % args.log_train_every_n) / args.minibatch_size == 0:
+        if log_train_counter <= 0:
+            log_train_counter += args.log_train_every_n
             print ITER, sample_num, " ",
             trainer.status()
             print "L:", cum_loss / token_count,
-            print "P:", cum_perplexity / sent_count,
+            print "P:", math.exp(cum_loss / token_count),
             print "T:", (time.time() - _start),
             _start = time.time()
-            sample = lm.sample(first=BEGIN_TOKEN,stop=END_TOKEN,nchars=1000)
+            sample = lm.sample(first=BEGIN_TOKEN,stop=END_TOKEN,nchars=10)
             if sample: print lm.vocab.pp(sample),
             token_count = sent_count = cum_loss = cum_perplexity = 0.0
             print
         #### end of train logging
 
         #### validation logging
-        if (sample_num % args.log_valid_every_n) / args.minibatch_size == 0:
-            v_token_count = v_sent_count = v_cum_loss = v_cum_perplexity = 0.0
+        if log_valid_counter <= 0:
+            log_valid_counter += args.log_valid_every_n
+            v_token_count = v_sent_count = v_cum_loss = 0.0
             v_start = time.time()
             for v_i in valid_mb_indices:
                 v_batch = valid_data[v_i:v_i+args.minibatch_size]
@@ -191,17 +193,18 @@ for ITER in range(args.epochs):
                 else:                           v_losses = lm.BuildLMGraph_batch(v_isents, sent_args={"test":True})
                 v_gen_losses = v_losses.vec_value()
                 v_cum_loss += sum(v_losses.vec_value())
-                v_cum_perplexity += sum([math.exp(v_gen_loss / predictions_made(v_sent)) for v_gen_loss, v_sent in zip(v_gen_losses, v_batch)])
-                v_token_count += sum([predictions_made(v_sent) for v_sent in v_batch])
+                v_token_count += sum([words_predicted(v_sent) for v_sent in v_batch])
                 v_sent_count += len(v_batch)
+            v_cum_perplexity = math.exp(v_cum_loss / v_token_count)
             print "[Validation "+str(sample_num) + "]\t" + \
                   "Loss: "+str(v_cum_loss / v_token_count) + "\t" + \
-                  "Perplexity: "+str(v_cum_perplexity / v_sent_count) + "\t" + \
+                  "Perplexity: "+str(v_cum_perplexity) + "\t" + \
                   "Time: "+str(time.time() - v_start),
+
             if args.save:
-                if best_score is None or best_score > v_cum_perplexity / v_sent_count:
+                if best_score is None or best_score > v_cum_perplexity:
                     print "new best...saving to", args.save
-                    best_score = v_cum_perplexity / v_sent_count
+                    best_score = v_cum_perplexity
                     lm.save(args.save)
             if args.output:
                 print "(logging to", args.output + ")"
@@ -209,7 +212,7 @@ for ITER in range(args.epochs):
                     outfile.write(str(ITER) + "\t" + \
                                   str(sample_num) + "\t" + \
                                   str(v_cum_loss / v_token_count) + "\t" + \
-                                  str(v_cum_perplexity / v_sent_count) + "\n")
+                                  str(v_cum_perplexity) + "\n")
             print "\n"
         #### end of validation logging
 
@@ -222,13 +225,16 @@ for ITER in range(args.epochs):
         gen_losses = losses.vec_value()
         loss = dynet.sum_batches(losses)
         cum_loss += loss.value()
-        cum_perplexity += sum([math.exp(gen_loss / predictions_made(sent)) for gen_loss, sent in zip(gen_losses, sents)])
-        token_count += sum([predictions_made(sent) for sent in sents])
+        cum_perplexity += sum([math.exp(gen_loss / words_predicted(sent)) for gen_loss, sent in zip(gen_losses, sents)])
+        token_count += sum([words_predicted(sent) for sent in sents])
         sent_count += len(sents)
         #### end of run training
 
         loss.backward()
         trainer.update(learning_rate)
+        sample_num += len(sents)
+        log_train_counter -= len(sents)
+        log_valid_counter -= len(sents)
         # end of one-sentence train loop
     trainer.update_epoch(learning_rate)
     # end of iteration
@@ -236,7 +242,7 @@ for ITER in range(args.epochs):
 
 ITER = "TEST"
 sample_num = "TEST"
-t_token_count = t_sent_count = t_cum_loss = t_cum_perplexity = 0.0
+t_token_count = t_sent_count = t_cum_loss = 0.0
 t_start = time.time()
 for t_i in test_mb_indices:
     t_batch = test_data[t_i:t_i+args.minibatch_size]
@@ -245,17 +251,20 @@ for t_i in test_mb_indices:
     else:                          t_losses = lm.BuildLMGraph_batch(t_isents, sent_args={"test":True})
     t_gen_losses = t_losses.vec_value()
     t_cum_loss += sum(t_losses.vec_value())
-    t_cum_perplexity += sum([math.exp(t_gen_loss / predictions_made(t_sent)) for t_gen_loss, t_sent in zip(t_gen_losses, t_batch)])
-    t_token_count += sum([predictions_made(t_sent) for t_sent in t_batch])
+    t_token_count += sum([words_predicted(t_sent) for t_sent in t_batch])
     t_sent_count += len(t_batch)
+t_cum_perplexity = math.exp(t_cum_loss / t_token_count)
 print "[Test "+str(sample_num) + "]\t" + \
       "Loss: "+str(t_cum_loss / t_token_count) + "\t" + \
-      "Perplexity: "+str(t_cum_perplexity / t_sent_count) + "\t" + \
+      "Perplexity: "+str(t_cum_perplexity) + "\t" + \
       "Time: "+str(time.time() - t_start),
+#       "Perplexity: "+str(t_cum_perplexity / t_sent_count) + "\t" + \
 if args.output:
     print "(logging to", args.output + ")"
     with open(args.output, "a") as outfile:
         outfile.write(str(ITER) + "\t" + \
                       str(sample_num) + "\t" + \
                       str(t_cum_loss / t_token_count) + "\t" + \
-                      str(t_cum_perplexity / t_sent_count) + "\n")
+                      str(t_cum_perplexity) + "\n")
+if args.qual:
+    print lm.qual_anal()

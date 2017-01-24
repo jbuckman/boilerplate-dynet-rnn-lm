@@ -214,15 +214,15 @@ def get_reader(name):
     raise Exception("no reader found with name: " + name)
 
 class GenericLineCorpusReader(CorpusReaderTemplate):
-    names = {"generic_char", "generic_word"}
+    names = {"generic_char", "generic_word", "tokenize_word"}
     def __init__(self, fname, begin=None, end=None, mode="generic_char"):
         self.fname = fname
         self.mode = mode
         self.begin = begin
         self.end = end
         self.seq2seq = False
-        self.delimiter = '\032' if mode == "generic_char" else ' '
-        if mode == "generic_word":
+        self.delimiter = '' if mode == "generic_char" else ' '
+        if mode == "tokenize_word":
             from pattern.en import tokenize
             self.tokenize = tokenize
 
@@ -242,7 +242,11 @@ class GenericLineCorpusReader(CorpusReaderTemplate):
                 elif self.mode == "generic_word":
                     for line in doc.split("\n"):
                         if not line: continue
-                        yield [self.begin] + ' '.join(self.tokenize(line)).split(" ") + [self.end]
+                        yield [self.begin] + [word for word in line.split(" ") if word] + [self.end]
+                elif self.mode == "tokenize_word":
+                    for line in doc.split("\n"):
+                        if not line: continue
+                        yield [self.begin] + [word for word in ' '.join(self.tokenize(line)).split(" ") if word] + [self.end]
 
 class PTBCorpusReader(CorpusReaderTemplate):
     names = {"ptb", "ptb_bracketed", "ptb_stripped", "ptb_char_stripped", "ptb_nopos"}
