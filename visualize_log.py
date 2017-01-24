@@ -109,10 +109,9 @@ for n, title in enumerate(log_data):
                     lw=2.5,
                     color=color_sequence[n])
 
-    # Add a text label to the right end of every line. Most of the code below
-    # is adding specific offsets y position because some labels overlapped.
-    x_pos = log_data[title]["xs"][0] + 7000
-    y_pos = log_data[title]["ys"][0] - 50
+    # Add a text label to the right end of every line.
+    x_pos = log_data[title]["xs"][0] * 1.1
+    y_pos = log_data[title]["ys"][0] * .95
 
     # Again, make sure that all labels are large enough to be easily read
     # by the viewer.
