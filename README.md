@@ -60,7 +60,7 @@ First, let's train a baseline model for 10 epochs:
 
 `[Test TEST]     Loss: 5.0651960628      Perplexity: 158.411497631       Time: 20.4854779243`
 
-This is much worse than the baseline perplexity reported in the paper, but that's because we are just using a generic LSTM model as our baseline, rather than the more complex VD-LSTM model.
+This is much worse than the baseline perplexity reported in the paper, but that's because we are just using a generic LSTM model as our baseline, rather than the more complex VD-LSTM model, and with many fewer parameters.
 
 ### Write, Train & Evaluate Another Model
 
@@ -74,7 +74,7 @@ Next, let's modify our baseline language model to incorporate reuse of word embe
 
 `[Test TEST]     Loss: 4.88281608367     Perplexity: 132.001869276       Time: 20.2611508369`
 
-And there we have it - reuse of embeddings gives us a 6-point decrease in perplexity.  Nice!
+And there we have it - reuse of embeddings gives us a 26-point decrease in perplexity.  Nice!
 
 ### Visualize Training
 
