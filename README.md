@@ -58,7 +58,7 @@ First, let's train a baseline model for 10 epochs:
 
 `python train.py --dynet-mem 3000 --word_level --minibatch_size=24 --load=small_baseline.model --evaluate`
 
-`[Test TEST]     Loss: 4.49591021467     Perplexity: 121.516469934       Time: 17.0475099087`
+`[Test TEST]     Loss: 5.0651960628      Perplexity: 158.411497631       Time: 20.4854779243`
 
 This is much worse than the baseline perplexity reported in the paper, but that's because we are just using a generic LSTM model as our baseline, rather than the more complex VD-LSTM model.
 
@@ -72,7 +72,7 @@ Next, let's modify our baseline language model to incorporate reuse of word embe
 
 `python train.py --dynet-mem 3000 --arch=reuse_emb --word_level --minibatch_size=24 --load=small_reuseemb.model --evaluate`
 
-`[Test TEST]     Loss: 4.34946627675     Perplexity: 115.64385445        Time: 15.4759089947`
+`[Test TEST]     Loss: 4.88281608367     Perplexity: 132.001869276       Time: 20.2611508369`
 
 And there we have it - reuse of embeddings gives us a 6-point decrease in perplexity.  Nice!
 
