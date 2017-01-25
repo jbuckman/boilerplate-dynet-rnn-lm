@@ -266,5 +266,3 @@ if args.output:
                       str(sample_num) + "\t" + \
                       str(t_cum_loss / t_token_count) + "\t" + \
                       str(t_cum_perplexity) + "\n")
-if args.qual:
-    print lm.qual_anal()
