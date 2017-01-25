@@ -52,7 +52,7 @@ Let's say we wanted to test out [how reuse of word embeddings affects the perfor
 
 First, let's train a baseline model for 10 epochs:
 
-`python train.py --dynet-mem 3000 --word_level --size=small --minibatch_size=24 --save=small_baseline.model --output=small_baseline.log`
+`python train.py --dynet-mem 3000 --word_level --size=small --minibatch_size=24 --save=small_reuseemb.model --output=small_baseline.log`
 
 (Wait for around 2-3 hours)
 
