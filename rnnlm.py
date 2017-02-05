@@ -17,7 +17,7 @@ class SaveableModel(object):
     def add_params(self):
         pass
 
-    def sample(self, first=0, stop=-1, nchars=100):
+    def sample(self, sent_args={}, nchars=100):
         pass
 
     def save(self, path):
@@ -120,7 +120,6 @@ class BaselineGenRNNLM(SaveableRNNLM):
         for (cw,nw) in zip(sent,sent[1:]):
             x_t = self.gen_lookup[cw]
             state = state.add_input(x_t)
-            # if self.vocab[nw].s[0] in {"(", ")"}: continue
             y_t = state.output()
             if APPLY_DROPOUT: y_t = dynet.dropout(y_t, self.args.dropout)
             r_t = bias + (R * y_t)
@@ -180,39 +179,41 @@ class BaselineGenRNNLM(SaveableRNNLM):
         nerr = dynet.esum(errs)
         return nerr
 
-    def sample(self, first=0, stop=-1, nchars=100):
-        return None
-        first = self.vocab[first].i
-        stop = self.vocab[stop].i
+    def sample(self, sent_args={}, max_toks=100):
+        if "skip_renew" not in sent_args: dynet.renew_cg()
 
-        res = [first]
-        dynet.renew_cg()
-        state = self.rnn.initial_state()
+        APPLY_DROPOUT = self.args.dropout is not None and ("test" not in sent_args or sent_args["test"] != True)
+        if APPLY_DROPOUT: self.gen_rnn.set_dropout(self.args.dropout)
+        else: self.gen_rnn.disable_dropout()
 
-        R = dynet.parameter(self.R)
-        bias = dynet.parameter(self.bias)
-        cw = first
-        while True:
-            x_t = self.lookup[cw]
+        # GENERATIVE MODEL
+        init_state = self.gen_rnn.initial_state()
+        R = dynet.parameter(self.gen_R)
+        bias = dynet.parameter(self.gen_bias)
+        errs = [] # will hold expressions
+        toks = []
+        state = init_state
+        cw = self.vocab[self.vocab.START_TOK].i
+        while len(toks) < max_toks:
+            x_t = self.gen_lookup[cw]
             state = state.add_input(x_t)
             y_t = state.output()
+            if APPLY_DROPOUT: y_t = dynet.dropout(y_t, self.args.dropout)
             r_t = bias + (R * y_t)
-            scores = r_t.vec_value()
-            if self.vocab.unk is not None:
-                ydist = util.softmax(scores[:self.vocab.unk.i]+scores[self.vocab.unk.i+1:]) # remove UNK
-                dist = ydist[:self.vocab.unk.i].tolist()+[0]+ydist[self.vocab.unk.i:].tolist()
-            else:
-                ydist = util.softmax(scores)
-                dist = ydist
-            rnd = random.random()
-            for i,p in enumerate(dist):
-                rnd -= p
-                if rnd <= 0: break
-            res.append(i)
-            cw = i
-            if cw == stop: break
-            if nchars and len(res) > nchars: break
-        return res
+            nw = util.weightedChoice(r_t.vec_value(), range(self.vocab.size), apply_softmax=True)
+            toks.append(nw)
+            if "get_err" in sent_args:
+                err = dynet.pickneglogsoftmax(r_t, int(nw))
+                errs.append(err)
+            if nw == self.vocab[self.vocab.END_TOK].i: break
+            cw = nw
+
+        if "get_err" in sent_args:
+            gen_err = dynet.esum(errs)
+            return gen_err
+        else:
+            return toks
+
 
 # Here's an example of how to implement another model to test.
 # This model implements the reused word embeddings from https://arxiv.org/pdf/1611.01462v1.pdf

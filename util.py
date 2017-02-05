@@ -43,6 +43,19 @@ def itersubclasses(cls, _seen=None):
             for sub in itersubclasses(sub, _seen):
                 yield sub
 
+def get_no_padding_indices(data, max_size):
+    ans = []
+    current_start = 0
+    current_count = 0
+    for i in range(len(data)):
+        if current_count >= max_size or len(data[current_start]) != len(data[i]):
+            ans.append((current_start, i))
+            current_count = 0
+            current_start = i
+        current_count += 1
+    ans.append((current_start, i+1))
+    return ans
+
 class key_dependent_dict(defaultdict):
     def __init__(self,f_of_x):
         super(key_dependent_dict, self).__init__(None) # base class doesn't get a factory

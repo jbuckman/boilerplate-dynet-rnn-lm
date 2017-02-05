@@ -47,6 +47,8 @@ parser.add_argument("--unbatch_idx", default=0, type=int, help="sometimes, with 
                                                                " minibatch to compensate, and this often results in a ton of memory being consumed. this flag sets the"
                                                                " number of sentences in the training set to skip minibatching on - the longest N inputs will be "
                                                                "given batches of size 1")
+parser.add_argument("--padded_batches", action="store_true", help="if this flag is not set, sentences will only be batched when there are multiple sentences of the"
+                                                                  " same length.")
 parser.add_argument("--log_train_every_n", default=100, type=int, help="how often to log training loss")
 parser.add_argument("--log_valid_every_n", default=5000, type=int, help="how often to evaluate on validation set, log the loss, and potentially save off the model")
 parser.add_argument("--output", help="file location to log validation outputs to")
@@ -147,12 +149,18 @@ train_data.sort(key=lambda x:-len(x))
 valid_data.sort(key=lambda x:-len(x))
 test_data.sort(key=lambda x:-len(x))
 
-unbatch_idx = args.minibatch_size*(int(args.unbatch_idx/args.minibatch_size))
-train_mb_indices = range(unbatch_idx) + range(unbatch_idx, len(train_data), args.minibatch_size)
-valid_mb_indices = range(0, len(valid_data), args.minibatch_size)
-test_mb_indices = range(0, len(test_data), args.minibatch_size)
+if args.padded_batches:
+    unbatch_idx = args.minibatch_size*(int(args.unbatch_idx/args.minibatch_size)+1)
+    train_mb_indices = zip(range(unbatch_idx), range(1, unbatch_idx+1)) + zip(range(unbatch_idx, len(train_data), args.minibatch_size), range(unbatch_idx+args.minibatch_size, len(train_data)+args.minibatch_size, args.minibatch_size))
+    valid_mb_indices = zip(range(0, len(valid_data), args.minibatch_size), range(args.minibatch_size, len(valid_data)+args.minibatch_size, args.minibatch_size))
+    test_mb_indices = zip(range(0, len(test_data), args.minibatch_size), range(args.minibatch_size, len(test_data)+args.minibatch_size, args.minibatch_size))
+else:
+    train_mb_indices = util.get_no_padding_indices(train_data, args.minibatch_size)
+    valid_mb_indices = util.get_no_padding_indices(valid_data, args.minibatch_size)
+    test_mb_indices = util.get_no_padding_indices(test_data, args.minibatch_size)
 
-words_predicted = lambda x: len(x) - 1
+if args.word_level: words_predicted = lambda x: len(x) - 1
+else:               words_predicted = lambda x: len([c for c in vocab.pp(x) if c == ' ']) + 2
 
 ################################### LEGGO
 best_score = None
@@ -165,7 +173,7 @@ for ITER in range(args.epochs):
     lm.epoch = ITER
     random.shuffle(train_mb_indices)
 
-    for i, index in enumerate(train_mb_indices):
+    for i, (start_index, end_index) in enumerate(train_mb_indices):
         #### train logging
         if log_train_counter <= 0:
             log_train_counter += args.log_train_every_n
@@ -175,7 +183,7 @@ for ITER in range(args.epochs):
             print "P:", math.exp(cum_loss / token_count),
             print "T:", (time.time() - _start),
             _start = time.time()
-            sample = lm.sample(first=BEGIN_TOKEN,stop=END_TOKEN,nchars=10)
+            sample = lm.sample(max_toks=20)
             if sample: print lm.vocab.pp(sample),
             token_count = sent_count = cum_loss = cum_perplexity = 0.0
             print
@@ -186,8 +194,8 @@ for ITER in range(args.epochs):
             log_valid_counter += args.log_valid_every_n
             v_token_count = v_sent_count = v_cum_loss = 0.0
             v_start = time.time()
-            for v_i in valid_mb_indices:
-                v_batch = valid_data[v_i:v_i+args.minibatch_size]
+            for (v_start_index, v_end_index) in valid_mb_indices:
+                v_batch = valid_data[v_start_index:v_end_index]
                 v_isents = [[lm.vocab[w].i for w in v_sent] for v_sent in v_batch]
                 if args.minibatch_size == 1:    v_losses = lm.BuildLMGraph(v_isents[0], sent_args={"test":True})
                 else:                           v_losses = lm.BuildLMGraph_batch(v_isents, sent_args={"test":True})
@@ -217,8 +225,7 @@ for ITER in range(args.epochs):
         #### end of validation logging
 
         #### run training
-        if index < unbatch_idx: sents = train_data[index:index+1]
-        else: sents = train_data[index:index+args.minibatch_size]
+        sents = train_data[start_index:end_index]
         isents = [[lm.vocab[w].i for w in sent] for sent in sents]
         if args.minibatch_size == 1: losses = lm.BuildLMGraph(isents[0], sent_args={"test":False})
         else:                        losses = lm.BuildLMGraph_batch(isents, sent_args={"test":False})
@@ -244,8 +251,8 @@ ITER = "TEST"
 sample_num = "TEST"
 t_token_count = t_sent_count = t_cum_loss = 0.0
 t_start = time.time()
-for t_i in test_mb_indices:
-    t_batch = test_data[t_i:t_i+args.minibatch_size]
+for t_start_index, t_end_index in test_mb_indices:
+    t_batch = test_data[t_start_index:t_end_index]
     t_isents = [[lm.vocab[w].i for w in t_sent] for t_sent in t_batch]
     if args.minibatch_size == 1:   t_losses = lm.BuildLMGraph(t_isents[0], sent_args={"test":True})
     else:                          t_losses = lm.BuildLMGraph_batch(t_isents, sent_args={"test":True})
@@ -258,7 +265,6 @@ print "[Test "+str(sample_num) + "]\t" + \
       "Loss: "+str(t_cum_loss / t_token_count) + "\t" + \
       "Perplexity: "+str(t_cum_perplexity) + "\t" + \
       "Time: "+str(time.time() - t_start),
-#       "Perplexity: "+str(t_cum_perplexity / t_sent_count) + "\t" + \
 if args.output:
     print "(logging to", args.output + ")"
     with open(args.output, "a") as outfile:
